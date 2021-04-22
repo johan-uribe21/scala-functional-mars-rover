@@ -6,18 +6,18 @@ object RoverPlatform {
   val MapWidth = 10
   val MapLength = 10
 
-  def initializeRover(coords: (Int, Int), heading: Char): Option[RoverState] = {
-    Some(RoverState(Position(coords), Heading(heading)))
+  def initializeRover(coords: (Int, Int), heading: Char): RoverState = {
+    RoverState(Position(coords), Heading(heading))
   }
 
   @tailrec
-  def executeCommands(state: Option[RoverState], cmds: List[Char]): Option[RoverState] = {
+  def executeCommands(state: RoverState, cmds: List[Char]): RoverState = {
     if (cmds.isEmpty) return state
     val newState = execute(state, Command(cmds.head))
     executeCommands(newState, cmds.tail)
   }
 
-  private def execute(state: Option[RoverState], command: Command): Option[RoverState] = {
+  private def execute(state: RoverState, command: Command): RoverState = {
     command match {
       case Command.Forward => move(state, state.increment)
       case Command.Backward => move(state, -state.increment)
@@ -27,7 +27,7 @@ object RoverPlatform {
     }
   }
 
-  private def turnLeft(state: Option[RoverState]): Option[RoverState] = {
+  private def turnLeft(state: RoverState): RoverState = {
     state.heading match {
       case Heading.North => updateHeading(state, Heading.West)
       case Heading.South => updateHeading(state, Heading.East)
@@ -37,7 +37,7 @@ object RoverPlatform {
     }
   }
 
-  private def turnRight(state: Option[RoverState]): Option[RoverState] = {
+  private def turnRight(state: RoverState): RoverState = {
     state.heading match {
       case Heading.North => updateHeading(state, Heading.East)
       case Heading.South => updateHeading(state, Heading.West)
@@ -47,22 +47,19 @@ object RoverPlatform {
     }
   }
 
-  private def updateHeading(state: Option[RoverState], h: Heading): Option[RoverState] = RoverState(state.position, h)
+  private def updateHeading(state: RoverState, h: Heading): RoverState = RoverState(state.position, h)
 
-  private def move(state: Option[RoverState], i: Int): Option[RoverState] = {
-    state match {
-      case Some(state) => state.heading match {
-        case Heading.North => updateCoords(state, dy = i)
-        case Heading.South => updateCoords(state, dy = -i)
-        case Heading.East => updateCoords(state, dx = i)
-        case Heading.West => updateCoords(state, dx = -i)
-        case _ => throw new InvalidCommand
-      }
-      case None => None
+  private def move(state: RoverState, i: Int): RoverState = {
+    state.heading match {
+      case Heading.North => updateCoords(state, dy = i)
+      case Heading.South => updateCoords(state, dy = -i)
+      case Heading.East => updateCoords(state, dx = i)
+      case Heading.West => updateCoords(state, dx = -i)
+      case _ => throw new InvalidCommand
     }
   }
 
-  private def updateCoords(state: Option[RoverState], dx: Int = 0, dy: Int = 0): Option[RoverState] = {
+  private def updateCoords(state: RoverState, dx: Int = 0, dy: Int = 0): RoverState = {
     val position = calculateCoordinates(state.position, dx, dy)
     RoverState(position, state.heading)
   }
