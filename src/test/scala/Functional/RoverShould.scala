@@ -1,9 +1,10 @@
 package Functional
 
-import org.scalatest.{BeforeAndAfter, WordSpec}
+import org.scalatest.{BeforeAndAfter, EitherValues, WordSpec}
 import RoverPlatform._
+import org.scalatest.Matchers.{convertToAnyShouldWrapper, matchPattern}
 
-class RoverShould extends WordSpec with BeforeAndAfter {
+class RoverShould extends WordSpec with BeforeAndAfter with EitherValues {
   private val initialCoords = (1, 1)
   private val initialHeading = 'N'
   private var roverState = initializeRover(initialCoords, initialHeading)
@@ -13,23 +14,19 @@ class RoverShould extends WordSpec with BeforeAndAfter {
   }
 
   "initialize with a starting point and heading" in  {
-    assert(roverState.position == Position(initialCoords))
-    assert(roverState.heading == Heading(initialHeading))
+    roverState should matchPattern { case Right(RoverState(Position((1, 1)), North, 1)) => }
   }
 
   "receive and execute commands - Empty" in {
     roverState = executeCommands(roverState, List())
 
-    assert(roverState.position == Position(initialCoords))
-    assert(roverState.heading == Heading(initialHeading))
+    roverState should matchPattern { case Right(RoverState(Position((1, 1)), North, 1)) => }
   }
 
   "move forward one unit when given command 'f'" in {
     roverState = executeCommands(roverState, List('f'))
     val newCoords = (1, 2)
-
-    assert(roverState.position == Position(newCoords))
-    assert(roverState.heading == Heading(initialHeading))
+    roverState should matchPattern { case Right(RoverState(Position((1, 2)), North, 1)) => }
   }
 
   "move backwards one unit when given command 'b'" in {
