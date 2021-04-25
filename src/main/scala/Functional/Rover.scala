@@ -6,6 +6,7 @@ object RoverPlatform {
   val InitialCoords: (Int, Int) = (1, 1)
   val InitialHeading: Char = 'N'
   val MaximumMovement: Int = 10
+  val ObstacleLocations: List[Position] = List(Position(3, 2))
 
   private type EitherState = Either[RoverError, RoverState]
 
@@ -55,9 +56,12 @@ object RoverPlatform {
 
   private def updateCoords(state: RoverState, delta: (Int, Int)): EitherState = {
     val position = calculateCoordinates(state.position, delta._1, delta._2)
-//     Here check if there is an obstacle or not. Return Left if there is.
-    Right(RoverState(position, state.heading))
+    val collision = findCollisions(position)
+    if (collision.nonEmpty) return Left(RoverError(s"Collision occurred at ${collision.head.toString}"))
+    Right(RoverState(position, state.heading, state.increment))
   }
+
+  private def findCollisions(p: Position): List[Position] = ObstacleLocations.filter(loc => loc == p)
 
   private def calculateCoordinates(p: Position, dx: Int, dy: Int): Position = {
     var pos = Position(p.x + dx, p.y + dy)
@@ -121,13 +125,13 @@ case object East extends Heading {
   override def toString = "East"
   override def leftHeading: Heading = North
   override def rightHeading: Heading = South
-  override def deltaUnit: (Int, Int) = (-1, 0)
+  override def deltaUnit: (Int, Int) = (1, 0)
 }
 case object West extends Heading {
   override def toString = "West"
   override def leftHeading: Heading = South
   override def rightHeading: Heading = North
-  override def deltaUnit: (Int, Int) = (1, 0)
+  override def deltaUnit: (Int, Int) = (-1, 0)
 }
 
 sealed trait Lateral
@@ -138,10 +142,10 @@ sealed trait Command {
   def toString: String
 }
 case object LeftSide extends Command with Lateral {
-  override def toString: String = "Left"
+  override def toString: String = "LeftSide"
 }
 case object RightSide extends Command with Lateral {
-  override def toString: String = "Right"
+  override def toString: String = "RightSide"
 }
 case object Forward extends Command with Medial {
   override def toString: String = "Forward"
@@ -152,14 +156,14 @@ case object Backward extends Command with Medial {
   override def multiplier: Int = -1
 }
 
-class InvalidCommand extends RuntimeException
-
 case class Position(coordinates: (Int, Int) = (1, 1)) {
   def this(x: Int, y: Int) {
     this((x, y))
   }
   val x: Int = coordinates._1
   val y: Int = coordinates._2
+
+  override def toString: String = s"($x, $y)"
 }
 
 case class RoverState(position: Position = Position(), heading: Heading = North, increment: Int = 1)
